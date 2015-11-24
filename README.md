@@ -1,14 +1,14 @@
-Pokémon Showdown
+Origin 
 ========================================================================
 
-Navigation: [Website][1] | **Server repository** | [Client repository][2]
+Navigation: [Origin][1] | **Server repository** | [Client repository][2]
 
-  [1]: http://pokemonshowdown.com/
+  [1]: http://origin.psim.us/
   [2]: https://github.com/Zarel/Pokemon-Showdown-Client
 
-[![Build Status](https://travis-ci.org/Zarel/Pokemon-Showdown.svg)](https://travis-ci.org/Zarel/Pokemon-Showdown)
-[![Dependency Status](https://david-dm.org/zarel/Pokemon-Showdown.svg)](https://david-dm.org/zarel/Pokemon-Showdown)
-[![devDependency Status](https://david-dm.org/zarel/Pokemon-Showdown/dev-status.svg)](https://david-dm.org/zarel/Pokemon-Showdown#info=devDependencies)
+[![Build Status](https://travis-ci.org/Nineage/Origin.svg)](https://travis-ci.org/nineage/origin)
+[![Dependency Status](https://david-dm.org/Nineage/Origin.svg)](https://david-dm.org/nineage/origin)
+[![devDependency Status](https://david-dm.org/Nineage/Origin/dev-status.svg)](https://david-dm.org/nineage/Origin#info=devDependencies)
 
 Introduction
 ------------------------------------------------------------------------
