@@ -2,6 +2,8 @@
 /logs/*
 /node_modules
 /eslint-cache
+/chat-plugins/leagueshops.js
+/chat-plugins/card.js
 /chat-plugins/private.js
 npm-debug.log
 
