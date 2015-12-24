@@ -1,14 +1,10 @@
-/*
-* Poll chat plugin
-* By bumbadadabum and Zarel.
-*/
-
 'use strict';
 
-const permission = 'announce';
+const permission = 'broadcast';
+const blackbutton = 'padding:2px; background-color:#000; border:1px solid #666; color:white';
 
-let Poll = (function () {
-	function Poll(room, question, options) {
+class Poll {
+	constructor(room, question, options) {
 		if (room.pollNumber) {
 			room.pollNumber++;
 		} else {
@@ -28,7 +24,7 @@ let Poll = (function () {
 		}
 	}
 
-	Poll.prototype.vote = function (user, option) {
+	vote(user, option) {
 		let ip = user.latestIp;
 		let userid = user.userid;
 
@@ -42,9 +38,9 @@ let Poll = (function () {
 		this.totalVotes++;
 
 		this.update();
-	};
+	}
 
-	Poll.prototype.blankvote = function (user, option) {
+	blankvote(user, option) {
 		let ip = user.latestIp;
 		let userid = user.userid;
 
@@ -56,21 +52,23 @@ let Poll = (function () {
 		}
 
 		this.update();
-	};
+	}
 
-	Poll.prototype.generateVotes = function () {
+	generateVotes() {
 		let output = '<div class="infobox"><p style="margin: 2px 0 5px 0"><span style="border:1px solid #6A6;color:#484;border-radius:4px;padding:0 3px"><i class="fa fa-bar-chart"></i> Poll</span> <strong style="font-size:11pt">' + Tools.escapeHTML(this.question) + '</strong></p>';
 		this.options.forEach(function (option, number) {
-			output += '<div style="margin-top: 3px"><button value="/poll vote ' + number + '" name="send" title="Vote for ' + number + '. ' + Tools.escapeHTML(option.name) + '">' + number + '. <strong>' + Tools.escapeHTML(option.name) + '</strong></button></div>';
+			output += '<div style="margin-top: 3px"><button style="' + blackbutton + '" value="/poll vote ' + number + '" name="send" title="Vote for ' + number + '. ' + Tools.escapeHTML(option.name) + '">' + number + '. <strong>' + Tools.escapeHTML(option.name) + '</strong></button></div>';
 		});
+		output += '<div style="margin-top: 7px; padding-left: 12px"><button value="/poll results" name="send" title="View results - you will not be able to vote after viewing results"><small>(View results)</small></button></div>';
 		output += '</div>';
 
 		return output;
-	};
+	}
 
-	Poll.prototype.generateResults = function (ended, option) {
+	generateResults(ended, option) {
 		let icon = '<span style="border:1px solid #' + (ended ? '777;color:#555' : '6A6;color:#484') + ';border-radius:4px;padding:0 3px"><i class="fa fa-bar-chart"></i> ' + (ended ? "Poll ended" : "Poll") + '</span>';
-		let output = '<div class="infobox"><p style="margin: 2px 0 5px 0">' + icon + ' <strong style="font-size:11pt">' + Tools.escapeHTML(this.question) + '</strong></p>';
+		let totalVotes = '<p align="left">[Total Votes: ' + this.totalVotes + ']</p>';
+		let output = '<div class="infobox"><p style="margin: 2px 0 5px 0">' + icon + ' <strong style="font-size:11pt">' + Tools.escapeHTML(this.question) + '</strong></p>' + totalVotes;
 		let iter = this.options.entries();
 
 		let i = iter.next();
@@ -78,16 +76,16 @@ let Poll = (function () {
 		let colors = ['#79A', '#8A8', '#88B'];
 		while (!i.done) {
 			let percentage = Math.round((i.value[1].votes * 100) / (this.totalVotes || 1));
-			output += '<div style="margin-top: 3px">' + i.value[0] + '. <strong>' + (i.value[0] === option ? '<em>' : '') + Tools.escapeHTML(i.value[1].name) + (i.value[0] === option ? '</em>' : '') + '</strong> <small>(' + i.value[1].votes + ' vote' + (i.value[1].votes === 1 ? '' : 's') + ')</small><br /><span style="font-size:7pt;background:' + colors[c % 3] + ';padding-right:' + (percentage * 3) + 'px"></span><small>&nbsp;' + percentage + '%</small></div>';
+			output += '<div style="margin-top: 3px">' + i.value[0] + '. <strong>' + (i.value[0] === option ? '<em>' : '') + Tools.escapeHTML(i.value[1].name) + (i.value[0] === option ? '</em>' : '') + '</strong> <small> | <small>&nbsp;' + percentage + '%</small> (' + i.value[1].votes + ' vote' + (i.value[1].votes === 1 ? '' : 's') + ')</small><br /><span style="font-size:7pt;background:' + colors[c % 3] + ';padding-right:' + (percentage * 3) + 'px"></span></div>';
 			i = iter.next();
 			c++;
 		}
 		output += '</div>';
 
 		return output;
-	};
+	}
 
-	Poll.prototype.update = function () {
+	update() {
 		let results = [];
 
 		for (let i = 0; i <= this.options.size; i++) {
@@ -103,9 +101,9 @@ let Poll = (function () {
 				user.sendTo(this.room, '|uhtmlchange|poll' + this.room.pollNumber + '|' + results[this.voterIps[user.latestIp]]);
 			}
 		}
-	};
+	}
 
-	Poll.prototype.display = function (user, broadcast) {
+	display() {
 		let votes = this.generateVotes();
 
 		let results = [];
@@ -114,16 +112,8 @@ let Poll = (function () {
 			results.push(this.generateResults(false, i));
 		}
 
-		let target = {};
-
-		if (broadcast) {
-			target = this.room.users;
-		} else {
-			target[0] = user;
-		}
-
-		for (let i in target) {
-			let thisUser = target[i];
+		for (let i in this.room.users) {
+			let thisUser = this.room.users[i];
 			if (thisUser.userid in this.voters) {
 				thisUser.sendTo(this.room, '|uhtml|poll' + this.room.pollNumber + '|' + results[this.voters[thisUser.userid]]);
 			} else if (thisUser.latestIp in this.voterIps) {
@@ -132,22 +122,36 @@ let Poll = (function () {
 				thisUser.sendTo(this.room, '|uhtml|poll' + this.room.pollNumber + '|' + votes);
 			}
 		}
-	};
+	}
 
-	Poll.prototype.end = function () {
+	displayTo(user, connection) {
+		if (!connection) connection = user;
+		if (user.userid in this.voters) {
+			connection.sendTo(this.room, '|uhtml|poll' + this.room.pollNumber + '|' + this.generateResults(false, this.voters[user.userid]));
+		} else if (user.latestIp in this.voterIps) {
+			connection.sendTo(this.room, '|uhtml|poll' + this.room.pollNumber + '|' + this.generateResults(false, this.voterIps[user.latestIp]));
+		} else {
+			connection.sendTo(this.room, '|uhtml|poll' + this.room.pollNumber + '|' + this.generateVotes());
+		}
+	}
+
+	onConnect(user, connection) {
+		this.displayTo(user, connection);
+	}
+
+	end() {
 		let results = this.generateResults(true);
 
 		this.room.send('|uhtmlchange|poll' + this.room.pollNumber + '|<div class="infobox">(The poll has ended &ndash; scroll down to see the results)</div>');
-		this.room.send('|html|' + results);
-	};
-
-	return Poll;
-})();
+		this.room.add('|html|' + results);
+	}
+}
 
 exports.commands = {
 	poll: {
 		create: 'new',
 		new: function (target, room, user, connection, cmd, message) {
+			if (!target) return this.parse('/help poll new');
 			if (target.length > 1024) return this.errorReply("Poll too long.");
 			let params = target.split(target.includes('|') ? '|' : ',').map(function (param) { return param.trim(); });
 
@@ -167,7 +171,7 @@ exports.commands = {
 			}
 
 			room.poll = new Poll(room, params[0], options);
-			room.poll.display(user, true);
+			room.poll.display();
 
 			this.logEntry("" + user.name + " used " + message);
 			return this.privateModCommand("(A poll was started by " + user.name + ".)");
@@ -176,7 +180,7 @@ exports.commands = {
 
 		vote: function (target, room, user) {
 			if (!room.poll) return this.errorReply("There is no poll running in this room.");
-			if (!target) return this.errorReply("Please specify an option.");
+			if (!target) return this.parse('/help poll vote');
 
 			if (target === 'blank') {
 				room.poll.blankvote(user);
@@ -247,12 +251,16 @@ exports.commands = {
 		endhelp: ["/poll end - Ends a poll and displays the results. Requires: % @ # & ~"],
 
 		show: 'display',
-		display: function (target, room, user) {
+		display: function (target, room, user, connection) {
 			if (!room.poll) return this.errorReply("There is no poll running in this room.");
 			if (!this.canBroadcast()) return;
 			room.update();
 
-			room.poll.display(user, this.broadcasting);
+			if (this.broadcasting) {
+				room.poll.display();
+			} else {
+				room.poll.displayTo(user, connection);
+			}
 		},
 		displayhelp: ["/poll display - Displays the poll"],
 
@@ -267,5 +275,34 @@ exports.commands = {
 				"/poll timer [minutes] - Sets the poll to automatically end after [minutes]. Requires: % @ # & ~",
 				"/poll results - Shows the results of the poll without voting. NOTE: you can't go back and vote after using this.",
 				"/poll display - Displays the poll",
-				"/poll end - Ends a poll and displays the results. Requires: % @ # & ~"]
+				"/poll end - Ends a poll and displays the results. Requires: % @ # & ~"],
+
+	votes: function(target, room, user) {
+		if (!room.poll) return this.errorReply("There is no poll running in this room.");
+		if (!this.canBroadcast()) return;
+		var votes = room.poll.totalVotes;
+		var lbl = (votes > 1 ? ' VOTES' : ' VOTE');
+		return this.sendReplyBox("TOTAL VOTES: " + votes + lbl);
+	},
+	ep: 'endpoll',
+	endpoll: function(target, room, user) {
+		this.parse('/poll end');
+	},
+	pr: 'pollremind',
+	pollremind: function(target, room, user) {
+		if (!room.poll) return this.errorReply("There is no poll running in this room.");
+		if (!this.canBroadcast()) return;
+		room.update();
+
+		room.poll.display(user, this.broadcasting);
+	},
+	tierpoll: 'tpoll',
+	tpoll: function(target, room, user) {
+		var tiers = ['Anything Goes', 'Challenge Cup 1v1', 'Hackmons Cup', 'Monotype', 'OU', 'Random Battle', 'Random Monotype Battle', 'UU'];
+		this.parse('/poll new Next tournament tier?, ' + tiers.sort());
+	},
+	vote: function(target, room, user) {
+		if (!target) return this.errorReply("Usage: /vote [poll option number] - votes for the [option] in the current poll.");
+		this.parse('/poll vote ' + target);
+	}
 };
